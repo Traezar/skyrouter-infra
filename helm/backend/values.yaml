@@ -9,6 +9,14 @@ migration:
   enabled: true
   repository: ""
 
+jobs:
+  enabled: true
+  repository: ""
+  fetchWaypoints:
+    schedule: "0 * * * *"
+  fetchFlights:
+    schedule: "0 * * * *"
+
 serviceAccount:
   create: true
   name: backend-sa

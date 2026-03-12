@@ -29,3 +29,11 @@ output "ecr_frontend_url" {
 output "ecr_backend_url" {
   value = aws_ecr_repository.backend.repository_url
 }
+
+output "ecr_backend_migrate_url" {
+  value = aws_ecr_repository.backend_migrate.repository_url
+}
+
+output "ecr_job_url" {
+  value = aws_ecr_repository.job.repository_url
+}

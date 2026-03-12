@@ -76,6 +76,7 @@ jobs:
             --set image.repository=${{ steps.ecr.outputs.registry }}/${{ env.PROJECT }}-backend \
             --set image.tag=${{ env.IMAGE_TAG }} \
             --set migration.repository=${{ steps.ecr.outputs.registry }}/${{ env.PROJECT }}-backend-migrate \
+            --set jobs.repository=${{ steps.ecr.outputs.registry }}/${{ env.PROJECT }}-job \
             --wait --timeout 5m
 
       - name: Deploy frontend
