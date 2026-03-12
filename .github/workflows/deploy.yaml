@@ -1,0 +1,95 @@
+name: Deploy App
+
+on:
+  # Triggered by skyrouter-frontend or skyrouter-backend after images are pushed
+  repository_dispatch:
+    types: [deploy-app]
+
+  # Manual deploy (e.g. rollback a specific service)
+  workflow_dispatch:
+    inputs:
+      service:
+        description: "Which service to deploy"
+        required: true
+        type: choice
+        options:
+          - frontend
+          - backend
+          - both
+      image_tag:
+        description: "Image tag (e.g. abc1234 or latest)"
+        required: true
+        default: "latest"
+
+env:
+  AWS_REGION: ap-southeast-1
+  EKS_CLUSTER: skyrouter-prod-cluster
+  PROJECT: skyrouter-prod
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve service and tag
+        run: |
+          if [ "${{ github.event_name }}" == "repository_dispatch" ]; then
+            echo "SERVICE=${{ github.event.client_payload.service }}" >> $GITHUB_ENV
+            echo "IMAGE_TAG=${{ github.event.client_payload.image_tag }}" >> $GITHUB_ENV
+            echo "Deploying ${{ github.event.client_payload.service }}:${{ github.event.client_payload.image_tag }} (triggered by ${{ github.event.client_payload.actor }})"
+          else
+            echo "SERVICE=${{ github.event.inputs.service }}" >> $GITHUB_ENV
+            echo "IMAGE_TAG=${{ github.event.inputs.image_tag }}" >> $GITHUB_ENV
+            echo "Manual deploy: ${{ github.event.inputs.service }}:${{ github.event.inputs.image_tag }}"
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER }} --region ${{ env.AWS_REGION }}
+
+      - uses: azure/setup-helm@v3
+
+      - name: Deploy backend
+        if: env.SERVICE == 'backend' || env.SERVICE == 'both'
+        run: |
+          echo "==> Deploying backend:${{ env.IMAGE_TAG }}"
+          helm upgrade --install backend ./helm/backend \
+            --set image.repository=${{ steps.ecr.outputs.registry }}/${{ env.PROJECT }}-backend \
+            --set image.tag=${{ env.IMAGE_TAG }} \
+            --wait --timeout 5m
+
+      - name: Deploy frontend
+        if: env.SERVICE == 'frontend' || env.SERVICE == 'both'
+        run: |
+          echo "==> Deploying frontend:${{ env.IMAGE_TAG }}"
+          helm upgrade --install frontend ./helm/frontend \
+            --set image.repository=${{ steps.ecr.outputs.registry }}/${{ env.PROJECT }}-frontend \
+            --set image.tag=${{ env.IMAGE_TAG }} \
+            --wait --timeout 5m
+
+      - name: Verify
+        run: |
+          echo "=== Pod status ==="
+          kubectl get pods
+          echo ""
+          echo "=== Rollout status ==="
+          if [ "$SERVICE" == "backend" ] || [ "$SERVICE" == "both" ]; then
+            kubectl rollout status deployment/backend-backend --timeout=120s
+          fi
+          if [ "$SERVICE" == "frontend" ] || [ "$SERVICE" == "both" ]; then
+            kubectl rollout status deployment/frontend-frontend --timeout=120s
+          fi

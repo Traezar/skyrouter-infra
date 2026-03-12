@@ -1,0 +1,90 @@
+replicaCount: 2
+
+image:
+  repository: ""
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: backend-sa
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::190484841788:role/skyrouter-prod-backend-irsa"
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: true
+  className: alb
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-southeast-1:190484841788:certificate/52fb3b38-a47c-4219-b4f9-46a590e7352b"
+    alb.ingress.kubernetes.io/healthcheck-path: /healthz
+    alb.ingress.kubernetes.io/group.name: skyrouter-prod
+    alb.ingress.kubernetes.io/group.order: "20"
+  hosts:
+    - host: api.skyquik.com
+      paths:
+        - path: /
+          pathType: Prefix
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 70
+
+env:
+  APP_ENV: production
+  PORT: "8080"
+  LOG_LEVEL: info
+  DB_HOST: "skyrouter-prod-postgres.c16qe8cgus6b.ap-southeast-1.rds.amazonaws.com"
+  DB_PORT: "5432"
+  DB_NAME: skyrouterdb
+  DB_SSL_MODE: require
+  AWS_REGION: ap-southeast-1
+
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 15
+
+readinessProbe:
+  httpGet:
+    path: /readyz
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+nodeSelector: {}
+tolerations: []
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - backend
+          topologyKey: kubernetes.io/hostname
