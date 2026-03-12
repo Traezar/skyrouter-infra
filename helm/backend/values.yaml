@@ -5,6 +5,10 @@ image:
   tag: "latest"
   pullPolicy: IfNotPresent
 
+migration:
+  enabled: true
+  repository: ""
+
 serviceAccount:
   create: true
   name: backend-sa
