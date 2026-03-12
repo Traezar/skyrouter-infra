@@ -59,7 +59,7 @@ autoscaling:
   maxReplicas: 4
   targetCPUUtilizationPercentage: 70
 
-envSecret: backend-db-credentials
+envSecret: skyrouter-secrets
 
 env:
   APP_ENV: production
