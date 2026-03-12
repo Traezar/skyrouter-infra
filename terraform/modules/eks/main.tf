@@ -140,6 +140,14 @@ resource "aws_security_group" "nodes" {
     description     = "Allow control plane to kubelet"
   }
 
+  ingress {
+    from_port       = 9443
+    to_port         = 9443
+    protocol        = "tcp"
+    security_groups = [aws_security_group.cluster.id]
+    description     = "Allow control plane to ALB webhook"
+  }
+
   egress {
     from_port   = 0
     to_port     = 0

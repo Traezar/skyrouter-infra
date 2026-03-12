@@ -1,6 +1,5 @@
 locals {
-  github_repo = "Traezar/skyrouter"
-  prefix      = "${var.project_name}-${var.environment}"
+  prefix = "${var.project_name}-${var.environment}"
 }
 
 resource "aws_iam_openid_connect_provider" "github_actions" {
@@ -25,7 +24,10 @@ resource "aws_iam_role" "github_actions_deploy" {
           "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
         }
         StringLike = {
-          "token.actions.githubusercontent.com:sub" = "repo:${local.github_repo}:ref:refs/heads/main"
+          "token.actions.githubusercontent.com:sub" = [
+            "repo:Traezar/skyrouter:ref:refs/heads/main",
+            "repo:Traezar/skyrouter-infra:ref:refs/heads/main"
+          ]
         }
       }
     }]
