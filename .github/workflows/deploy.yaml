@@ -66,6 +66,11 @@ jobs:
       - name: Deploy backend
         if: env.SERVICE == 'backend' || env.SERVICE == 'both'
         run: |
+          STATUS=$(helm status backend -n default -o json 2>/dev/null | jq -r '.info.status' 2>/dev/null || echo "not-found")
+          if [[ "$STATUS" == "pending-upgrade" || "$STATUS" == "pending-install" || "$STATUS" == "pending-rollback" || "$STATUS" == "failed" ]]; then
+            echo "Release stuck in '$STATUS', rolling back before upgrade..."
+            helm rollback backend -n default || helm uninstall backend -n default
+          fi
           echo "==> Deploying backend:${{ env.IMAGE_TAG }}"
           helm upgrade --install backend ./helm/backend \
             --set image.repository=${{ steps.ecr.outputs.registry }}/${{ env.PROJECT }}-backend \
@@ -75,6 +80,11 @@ jobs:
       - name: Deploy frontend
         if: env.SERVICE == 'frontend' || env.SERVICE == 'both'
         run: |
+          STATUS=$(helm status frontend -n default -o json 2>/dev/null | jq -r '.info.status' 2>/dev/null || echo "not-found")
+          if [[ "$STATUS" == "pending-upgrade" || "$STATUS" == "pending-install" || "$STATUS" == "pending-rollback" || "$STATUS" == "failed" ]]; then
+            echo "Release stuck in '$STATUS', rolling back before upgrade..."
+            helm rollback frontend -n default || helm uninstall frontend -n default
+          fi
           echo "==> Deploying frontend:${{ env.IMAGE_TAG }}"
           helm upgrade --install frontend ./helm/frontend \
             --set image.repository=${{ steps.ecr.outputs.registry }}/${{ env.PROJECT }}-frontend \
