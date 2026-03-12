@@ -27,10 +27,5 @@ spec:
               args: ["fetch-waypoints"]
               envFrom:
                 - secretRef:
-                    name: {{ .Values.envSecret }}
-              env:
-                {{- range $key, $val := .Values.env }}
-                - name: {{ $key }}
-                  value: {{ $val | quote }}
-                {{- end }}
+                    name: {{ .Values.jobs.secret }}
 {{- end }}

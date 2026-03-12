@@ -12,6 +12,7 @@ migration:
 jobs:
   enabled: true
   repository: ""
+  secret: skyrouter-secrets
   fetchWaypoints:
     schedule: "0 * * * *"
   fetchFlights:
