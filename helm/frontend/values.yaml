@@ -13,7 +13,7 @@ serviceAccount:
 
 service:
   type: ClusterIP
-  port: 80
+  port: 3000
 
 ingress:
   enabled: true
@@ -48,18 +48,19 @@ autoscaling:
 
 env:
   VITE_API_URL: https://api.skyquik.com
+  PORT: "3000"
 
 livenessProbe:
   httpGet:
     path: /
-    port: 80
+    port: 3000
   initialDelaySeconds: 5
   periodSeconds: 15
 
 readinessProbe:
   httpGet:
     path: /
-    port: 80
+    port: 3000
   initialDelaySeconds: 3
   periodSeconds: 10
 
