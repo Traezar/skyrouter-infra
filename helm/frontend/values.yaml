@@ -23,7 +23,7 @@ ingress:
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
     alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-southeast-1:190484841788:certificate/52fb3b38-a47c-4219-b4f9-46a590e7352b"
-    alb.ingress.kubernetes.io/healthcheck-path: /
+    alb.ingress.kubernetes.io/healthcheck-path: /flights
     alb.ingress.kubernetes.io/group.name: skyrouter-prod
     alb.ingress.kubernetes.io/group.order: "10"
   hosts:
@@ -47,7 +47,6 @@ autoscaling:
   targetCPUUtilizationPercentage: 75
 
 env:
-  VITE_API_URL: https://api.skyquik.com
   PORT: "3000"
 
 livenessProbe:

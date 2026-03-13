@@ -26,7 +26,8 @@ resource "aws_iam_role" "github_actions_deploy" {
         StringLike = {
           "token.actions.githubusercontent.com:sub" = [
             "repo:Traezar/skyrouter:ref:refs/heads/main",
-            "repo:Traezar/skyrouter-infra:ref:refs/heads/main"
+            "repo:Traezar/skyrouter-infra:ref:refs/heads/main",
+            "repo:Traezar/stratos:ref:refs/heads/main"
           ]
         }
       }
