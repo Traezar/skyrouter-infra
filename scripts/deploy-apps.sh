@@ -24,6 +24,8 @@ FRONTEND_ROLE_ARN=$(terraform output -raw frontend_iam_role_arn 2>/dev/null || e
 RDS_ENDPOINT=$(terraform output -raw rds_endpoint 2>/dev/null || echo "")
 ECR_FRONTEND=$(terraform output -raw ecr_frontend_url 2>/dev/null || echo "${ECR_BASE}/${PROJECT}-frontend")
 ECR_BACKEND=$(terraform output -raw ecr_backend_url 2>/dev/null || echo "${ECR_BASE}/${PROJECT}-backend")
+ECR_MIGRATE="${ECR_BACKEND}-migrate"
+ECR_JOB="${ECR_BASE}/${PROJECT}-job"
 
 popd > /dev/null
 
@@ -31,6 +33,8 @@ echo "   Backend IRSA:  $BACKEND_ROLE_ARN"
 echo "   Frontend IRSA: $FRONTEND_ROLE_ARN"
 echo "   RDS Endpoint:  $RDS_ENDPOINT"
 echo "   Image Tag:     $TAG"
+echo "   ECR Job:       $ECR_JOB"
+echo "   ECR Migrate:   $ECR_MIGRATE"
 
 # ---------- Deploy Backend ----------
 echo "==> Deploying backend..."
@@ -38,6 +42,8 @@ helm upgrade --install backend "${REPO_ROOT}/helm/backend" \
   --namespace "$NAMESPACE" \
   --set image.repository="$ECR_BACKEND" \
   --set image.tag="$TAG" \
+  --set migration.repository="$ECR_MIGRATE" \
+  --set jobs.repository="$ECR_JOB" \
   --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"="$BACKEND_ROLE_ARN" \
   --set env.DB_HOST="$RDS_ENDPOINT" \
   --set env.AWS_REGION="$REGION" \
