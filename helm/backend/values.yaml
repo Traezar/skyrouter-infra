@@ -14,9 +14,11 @@ jobs:
   repository: ""
   secret: skyrouter-secrets
   fetchWaypoints:
-    schedule: "0 * * * *"
+    schedule: "0 1 1 * *"
   fetchFlights:
     schedule: "0 * * * *"
+  rebuildEdges:
+    schedule: "0 2 1 * *"
 
 serviceAccount:
   create: true

@@ -1,0 +1,31 @@
+{{- if .Values.jobs.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "backend.fullname" . }}-rebuild-edges
+  labels:
+    {{- include "backend.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.jobs.rebuildEdges.schedule | quote }}
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: 3
+  successfulJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: {{ include "backend.fullname" . }}-rebuild-edges
+        spec:
+          serviceAccountName: {{ .Values.serviceAccount.name }}
+          restartPolicy: Never
+          containers:
+            - name: rebuild-edges
+              image: "{{ .Values.jobs.repository }}:{{ .Values.image.tag }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              args: ["rebuild-edges"]
+              envFrom:
+                - secretRef:
+                    name: {{ .Values.jobs.secret }}
+{{- end }}
