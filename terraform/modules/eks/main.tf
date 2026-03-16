@@ -63,12 +63,22 @@ resource "aws_eks_cluster" "main" {
     endpoint_public_access  = true
   }
 
-  enabled_cluster_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+  enabled_cluster_log_types = ["api", "authenticator"]
 
   depends_on = [
     aws_iam_role_policy_attachment.cluster_AmazonEKSClusterPolicy,
     aws_iam_role_policy_attachment.cluster_AmazonEKSVPCResourceController,
   ]
+}
+
+# ---------- EKS Control Plane Log Retention ----------
+resource "aws_cloudwatch_log_group" "eks_control_plane" {
+  name              = "/aws/eks/${aws_eks_cluster.main.name}/cluster"
+  retention_in_days = 30
+
+  lifecycle {
+    ignore_changes = [tags]
+  }
 }
 
 # ---------- OIDC Provider (required for IRSA) ----------
